@@ -1,0 +1,15 @@
+https://interrupt.memfault.com/blog/practical_zephyr_basics
+
+https://interrupt.memfault.com/tags#practical-zephyr-series
+
+https://devzone.nordicsemi.com/f/nordic-q-a/102356/using-i2c-on-nrf52840-with-2-sensor-devices
+
+https://michaelangerer.dev/zephyr/2023/02/12/zephyr-basics-shell.html
+
+https://blog.mbedded.ninja/programming/operating-systems/zephyr/debugging/
+
+https://blog.yizhiqiu.top/index.php/2025/03/15/%e4%b8%bapyocd%e6%b7%bb%e5%8a%a0%e9%9d%9e%e5%ae%98%e6%96%b9%e6%94%af%e6%8c%81%e7%9a%84mcu/
+
+https://www.youtube.com/watch?v=IKNHPmG-Qxo
+
+https://www.ruanx.net/rp2040-note-1/
