@@ -17,12 +17,12 @@ install_crate = { crate_name = "cargo-binutils", binary = "cargo", test_arg = [
     "--help",
 ] }
 command = "cargo"
-args = ["objcopy", "--release", "--", "-O", "ihex", "minila-super-rmk.hex"]
+args = ["objcopy", "--release", "--", "-O", "ihex", "target/minila-super-rmk.hex"]
 dependencies = ["build"]
 
 [tasks.bin]
 command = "cargo"
-args = ["objcopy", "--release", "--", "-O", "binary", "minila-super-rmk.bin"]
+args = ["objcopy", "--release", "--", "-O", "binary", "target/minila-super-rmk.bin"]
 dependencies = ["build"]
 
 [tasks.uf2]
@@ -34,9 +34,9 @@ command = "cargo"
 args = [
     "hex-to-uf2",
     "--input-path",
-    "minila-super-rmk.hex",
+    "target/minila-super-rmk.hex",
     "--output-path",
-    "minila-super-rmk.uf2",
+    "target/minila-super-rmk.uf2",
     "--family",
     "rp2040",
 ]

@@ -1,5 +1,6 @@
-/target/
+**/target/
 Cargo.lock
 *.uf2
 *.hex
 *.elf
+.DS_Store
