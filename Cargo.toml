@@ -8,10 +8,22 @@ repository = "https://github.com/rmk-rs/rmk"
 readme = "README.md"
 edition = "2021"
 license = "MIT OR Apache-2.0"
+default-run = "minila-super-rmk"
+
+[features]
+default = ["mpr121"]
+mpr121 = []
 
 [dependencies]
 rmk = { version = "0.9", features = ["rp2040"] }
+# enable usb_log for debugging
+# rmk = { version = "0.9", default-features = false, features = [
+#     "rp2040", "storage", "vial", "host_lock", "watchdog", "usb_log",
+# ] }
+# log = { version = "0.4", features = ["max_level_info"] }
 embassy-time = { version = "0.5", features = ["defmt"] }
+embassy-sync = "0.8"
+embedded-hal-async = "1"
 embassy-rp = { version = "0.10", features = [
     "rp2040",
     "defmt",
