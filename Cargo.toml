@@ -12,6 +12,7 @@ license = "MIT OR Apache-2.0"
 [dependencies]
 rmk = { version = "0.9", features = ["rp2040"] }
 embassy-time = { version = "0.5", features = ["defmt"] }
+embassy-sync = "0.8"
 embassy-rp = { version = "0.10", features = [
     "rp2040",
     "defmt",
