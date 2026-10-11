@@ -15,7 +15,7 @@ default = ["mpr121"]
 mpr121 = []
 
 [dependencies]
-rmk = { version = "0.9", features = ["rp2040"] }
+rmk = { version = "0.9", features = ["async_matrix", "rp2040"] }
 # enable usb_log for debugging
 # rmk = { version = "0.9", default-features = false, features = [
 #     "rp2040", "storage", "vial", "host_lock", "watchdog", "usb_log",
