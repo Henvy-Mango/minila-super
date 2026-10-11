@@ -105,6 +105,16 @@ forks = [
 [behavior.combo]
 combos = []
 
+[[behavior.macro.macros]]
+operations = [
+    { operation = "text", text = "134133987" }
+]
+
+[[behavior.macro.macros]]
+operations = [
+    { operation = "text", text = "807082193" }
+]
+
 [[input_device.encoder]]
 pin_a = "PIN_5"
 pin_b = "PIN_6"
