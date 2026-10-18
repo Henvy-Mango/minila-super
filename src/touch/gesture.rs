@@ -1,8 +1,21 @@
 //! Pure state machine, independent of MCU, I2C and RMK.
 
-// Derived from STAR/SEVEN/FOUR/ONE etc. in the supplied .pde example.
-// Columns share vertical row positions for swipes; taps use neighboring row/column regions.
-pub const KEYPAD_PATHS: &[&[u8]] = &[&[0, 1, 2, 3], &[4, 5, 6, 7], &[8, 9, 10, 11]];
+// For test mpr121 module, use a 3x4 keypad layout with the same physical order as the strip.
+// Entries are MPR121 ELE/ touch-status bit indices, not PCB PAD numbers.
+// PCB PAD:  0  1  2  3  4  5  6  7   8   9  10  11
+// MPR ELE:  0  1  2  3  4  5  6  7   8   9  10  11
+// pub const PCB_PAD_TO_ELE: [u8; 12] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+// pub const KEYPAD_PATHS: &[&[u8]] = &[&[0, 1, 2, 3], &[4, 5, 6, 7], &[8, 9, 10, 11]];
+
+// One continuous strip, ordered left to right in the PCB view (IC on the right).
+// Entries are MPR121 ELE/ touch-status bit indices, not PCB PAD numbers.
+// PCB PAD:  0  1  2  3  4  5  6  7   8   9  10  11
+// MPR ELE:  3  4  0  1  2  7  6  5  11  10   9   8
+pub const PCB_PAD_TO_ELE: [u8; 12] = [3, 4, 0, 1, 2, 7, 6, 5, 11, 10, 9, 8];
+pub const KEYPAD_PATHS: &[&[u8]] = &[&PCB_PAD_TO_ELE];
+
+// Maximum physical index distance: 3 covers a region of 4 adjacent electrodes.
+const MAX_TOUCH_SPAN: u8 = 3;
 const DEBOUNCE_MS: u64 = 10;
 const RELEASE_GRACE_MS: u64 = 50;
 /// Maximum time from the first release to the second press (not press-to-press).
@@ -11,7 +24,9 @@ pub const LONG_PRESS_MS: u64 = 600;
 pub const LONG_PRESS_REPEAT_INTERVAL_MS: u64 = 350;
 pub const SWIPE_HOLD_DELAY_MS: u64 = 600;
 pub const SWIPE_REPEAT_INTERVAL_MS: u64 = 350;
-// Swap swipe direction and its hold-repeat direction;
+// Swap swipe direction and its hold-repeat direction.
+// For the left-to-right strip: true = right decreases / left increases volume;
+// false = right increases / left decreases volume (using the default keymap).
 pub const SWIPE_REVERSE_DIRECTION: bool = true;
 // One-shot software timers after a zero-touch sample: debounce/re-arm,
 // release confirmation, then tap expiry. They do not request an I2C read.
@@ -195,7 +210,12 @@ impl Recognizer {
         }
         // Half-row units: one row of vertical travel produces a volume step.
         if pos.abs_diff(c.anchor) < 2 {
-            if c.swiping && pos == c.anchor {
+            // A finger may settle half a pad away from the last emitted step
+            // (e.g. onto two adjacent electrodes). Any stable valid position
+            // below the next step threshold can repeat the last direction.
+            // Raw mask changes above already restart the dwell timer; keep
+            // anchor unchanged so small movements still accumulate into steps.
+            if c.swiping {
                 let deadline = *c.repeat_at.get_or_insert(changed_ms + SWIPE_HOLD_DELAY_MS);
                 if now >= deadline {
                     // Emit at most one step per sample, never catch up with a
@@ -272,11 +292,12 @@ impl Recognizer {
             }
         }
         // Merge columns without weighting rows by how many pads are touched.
-        // Same-row overlap stays still; adjacent rows use their midpoint.
-        (remaining == 0 && first != u8::MAX && last - first <= 1).then(|| first + last)
+        // Up to four neighboring positions use the midpoint of their extent.
+        (remaining == 0 && first != u8::MAX && last - first <= MAX_TOUCH_SPAN).then(|| first + last)
     }
 
-    // Both clicks must fit in one 2x2 neighborhood, including diagonal corners.
+    // Both clicks must fit within four neighboring positions along the path.
+    // For multi-column layouts, retain the adjacent-column restriction.
     // Use physical coordinates from KEYPAD_PATHS, not numeric electrode distance.
     fn adjacent_region(&self, mask: u16) -> bool {
         let mut remaining = mask;
@@ -293,6 +314,9 @@ impl Recognizer {
                 }
             }
         }
-        mask != 0 && remaining == 0 && max_row - min_row <= 1 && max_col - min_col <= 1
+        mask != 0
+            && remaining == 0
+            && max_row - min_row <= usize::from(MAX_TOUCH_SPAN)
+            && max_col - min_col <= 1
     }
 }

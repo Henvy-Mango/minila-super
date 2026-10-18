@@ -1,5 +1,5 @@
 use super::{
-    gesture::{Gesture, Recognizer, KEYPAD_PATHS},
+    gesture::{Gesture, Recognizer, KEYPAD_PATHS, PCB_PAD_TO_ELE},
     TouchEvent,
 };
 use embassy_time::Instant;
@@ -8,12 +8,28 @@ use rmk::{
     macros::processor,
 };
 
-struct Pads(u16);
+// Both wrappers receive the raw ELE-indexed touch mask.
+struct PcbPads(u16);
 
-impl core::fmt::Debug for Pads {
+impl core::fmt::Debug for PcbPads {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         f.debug_list()
-            .entries((0u8..12).filter(|pad| self.0 & (1 << pad) != 0))
+            .entries(
+                PCB_PAD_TO_ELE
+                    .iter()
+                    .enumerate()
+                    .filter_map(|(pad, &ele)| (self.0 & (1 << ele) != 0).then_some(pad)),
+            )
+            .finish()
+    }
+}
+
+struct Electrodes(u16);
+
+impl core::fmt::Debug for Electrodes {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.debug_list()
+            .entries((0u8..12).filter(|ele| self.0 & (1 << ele) != 0))
             .finish()
     }
 }
@@ -47,9 +63,10 @@ impl TouchProcessor {
             Some(Ok(sample)) => {
                 if self.last_touched != Some(sample.touched) {
                     defmt::info!(
-                        "MPR121 mask=0x{:03X}, pad={}, filtered={:?}, baseline={:?}, delta={:?}",
+                        "MPR121 ele_mask=0x{:03X}, pcb_pad={}, ele={}, filtered_by_ele={:?}, baseline_by_ele={:?}, delta_by_ele={:?}",
                         sample.touched,
-                        defmt::Debug2Format(&Pads(sample.touched)),
+                        defmt::Debug2Format(&PcbPads(sample.touched)),
+                        defmt::Debug2Format(&Electrodes(sample.touched)),
                         sample.filtered,
                         sample.baseline,
                         sample.delta()
@@ -79,14 +96,16 @@ impl TouchProcessor {
             match g {
                 Gesture::LongPress { mask } => {
                     defmt::info!(
-                        "MPR121 gesture=LongPress pads={}",
-                        defmt::Debug2Format(&Pads(mask))
+                        "MPR121 gesture=LongPress pcb_pad={}, ele={}",
+                        defmt::Debug2Format(&PcbPads(mask)),
+                        defmt::Debug2Format(&Electrodes(mask))
                     );
                 }
                 Gesture::RepeatLongPress { mask } => {
                     defmt::info!(
-                        "MPR121 gesture=RepeatLongPress pads={}",
-                        defmt::Debug2Format(&Pads(mask))
+                        "MPR121 gesture=RepeatLongPress pcb_pad={}, ele={}",
+                        defmt::Debug2Format(&PcbPads(mask)),
+                        defmt::Debug2Format(&Electrodes(mask))
                     );
                 }
                 _ => defmt::info!("MPR121 gesture={}", defmt::Debug2Format(&g)),
